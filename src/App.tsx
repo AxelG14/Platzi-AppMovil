@@ -20,7 +20,10 @@ import {
   Target,
   AlertCircle,
   Check,
-  LogOut
+  LogOut,
+  Eye,
+  EyeOff,
+  ChevronDown
 } from 'lucide-react';
 
 type Course = {
@@ -136,6 +139,7 @@ const Toggle = ({ isOn, onToggle }: ToggleProps) => (
 // VISTA 0: Login (HU-11)
 const LoginView = ({ navigate }: ViewProps) => {
   const [rememberMe, setRememberMe] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <div className="h-full bg-[#0B101E] text-white pb-10 overflow-y-auto px-6 flex flex-col">
@@ -149,7 +153,7 @@ const LoginView = ({ navigate }: ViewProps) => {
 
       <div className="bg-[#2D161A] border border-[#5A2027] rounded-xl p-4 flex items-start space-x-3 mb-6">
         <AlertCircle className="w-5 h-5 text-[#F87171] flex-shrink-0 mt-0.5" />
-        <p className="text-sm text-[#F87171] leading-snug">Correo o contrasena incorrectos.<br/>Intenta de nuevo.</p>
+        <p className="text-sm text-[#F87171] leading-snug">Correo o contraseña incorrectos.<br/>Intenta de nuevo.</p>
       </div>
 
       <div className="space-y-5 mb-6">
@@ -164,12 +168,18 @@ const LoginView = ({ navigate }: ViewProps) => {
         <div>
           <label className="text-[13px] text-slate-400 mb-2 block">Contrasena</label>
           <div className="relative">
-            <input 
-              type="password" 
+            <input
+              type={showPassword ? 'text' : 'password'}
               defaultValue="password123"
               className="w-full bg-[#20242D] border border-transparent rounded-xl px-4 py-3.5 text-white text-sm focus:outline-none focus:border-[#98CA3F] transition-colors"
             />
-            <Circle className="w-5 h-5 text-slate-500 absolute right-4 top-3.5" />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-3.5 text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
           </div>
         </div>
       </div>
@@ -179,9 +189,9 @@ const LoginView = ({ navigate }: ViewProps) => {
           <div className={`w-[22px] h-[22px] rounded-md flex items-center justify-center transition-colors ${rememberMe ? 'bg-[#98CA3F]' : 'bg-[#20242D]'}`}>
             {rememberMe && <Check className="w-4 h-4 text-[#0B101E] stroke-[3]" />}
           </div>
-          <span className="text-sm text-slate-300">Recordar sesion</span>
+          <span className="text-sm text-slate-300">Recordar sesión</span>
         </label>
-        <span className="text-sm text-[#98CA3F] cursor-pointer hover:underline">Olvide mi contrasena</span>
+        <span className="text-sm text-[#98CA3F] cursor-pointer hover:underline">Olvide mi contraseña</span>
       </div>
 
       <button 
@@ -638,19 +648,64 @@ const CourseExamView = ({ navigate, course }: CourseViewProps) => {
 const CourseLearnView = ({ navigate, course }: CourseViewProps) => {
   const currentCourse = course || mockCourses[0];
   const [commentText, setCommentText] = useState('');
-
-  const modules = [
-    { id: 1, name: 'Módulo 1 · Fundamentos', status: 'Completado', lessons: 8 },
-    { id: 2, name: 'Módulo 2 · Asincronía', status: 'En curso', lessons: 10 },
-    { id: 3, name: 'Módulo 3 · APIs y práctica', status: 'Pendiente', lessons: 12 },
-    { id: 4, name: 'Módulo 4 · Proyecto final', status: 'Pendiente', lessons: 18 },
-  ];
-
-  const sampleComments = [
+  const [openModules, setOpenModules] = useState<number[]>([2]); // módulo en curso abierto por defecto
+  const [comments, setComments] = useState([
     { id: 1, user: 'Laura', text: 'La clase de async/await está buenísima, me ayudó mucho.' },
     { id: 2, user: 'Andrés', text: 'Tip: practica los ejercicios del módulo 2 antes de seguir.' },
     { id: 3, user: 'Sofía', text: 'Ya casi termino el proyecto final, ¡vamos equipo!' },
+  ]);
+
+  const handleSendComment = () => {
+    const trimmed = commentText.trim();
+    if (!trimmed) return;
+    setComments(prev => [...prev, { id: Date.now(), user: 'Tú', text: trimmed }]);
+    setCommentText('');
+  };
+
+  const toggleModule = (id: number) => {
+    setOpenModules(prev =>
+      prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
+    );
+  };
+
+  const modules = [
+    {
+      id: 1, name: 'Módulo 1 · Fundamentos', status: 'Completado', lessons: 8,
+      items: [
+        { title: 'Variables y tipos', duration: '8 min', done: true },
+        { title: 'Funciones Arrow', duration: '12 min', done: true },
+        { title: 'Scope y closures', duration: '10 min', done: true },
+        { title: 'Destructuring', duration: '9 min', done: true },
+      ],
+    },
+    {
+      id: 2, name: 'Módulo 2 · Asincronía', status: 'En curso', lessons: 10,
+      items: [
+        { title: 'Callbacks', duration: '7 min', done: true },
+        { title: 'Promesas', duration: '11 min', done: true },
+        { title: 'Async / Await', duration: '15 min', done: false },
+        { title: 'Fetch API', duration: '11 min', done: false },
+        { title: 'Manejo de errores', duration: '9 min', done: false },
+      ],
+    },
+    {
+      id: 3, name: 'Módulo 3 · APIs y práctica', status: 'Pendiente', lessons: 12,
+      items: [
+        { title: 'REST y JSON', duration: '8 min', done: false },
+        { title: 'Axios vs Fetch', duration: '10 min', done: false },
+        { title: 'Proyecto API pública', duration: '20 min', done: false },
+      ],
+    },
+    {
+      id: 4, name: 'Módulo 4 · Proyecto final', status: 'Pendiente', lessons: 18,
+      items: [
+        { title: 'Planificación del proyecto', duration: '12 min', done: false },
+        { title: 'Implementación', duration: '30 min', done: false },
+        { title: 'Revisión y entrega', duration: '15 min', done: false },
+      ],
+    },
   ];
+
 
   return (
     <div className="h-full bg-[#0B101E] text-white pb-32 overflow-y-auto">
@@ -681,40 +736,71 @@ const CourseLearnView = ({ navigate, course }: CourseViewProps) => {
 
         <h3 className="text-slate-400 text-xs font-semibold tracking-wider mb-4 uppercase">Módulos del curso</h3>
         <div className="space-y-3 mb-8">
-          {modules.map((module) => (
-            <div key={module.id} className="bg-[#151B2B] border border-slate-800 rounded-xl p-4">
-              <div className="flex items-center justify-between mb-1.5">
-                <h4 className="text-sm font-semibold text-white">{module.name}</h4>
-                <span
-                  className={`text-[11px] px-2 py-1 rounded-full border ${
-                    module.status === 'Completado'
-                      ? 'bg-[#1A261E] text-[#98CA3F] border-[#98CA3F]/30'
-                      : module.status === 'En curso'
-                      ? 'bg-[#E5A84B]/10 text-[#E5A84B] border-[#E5A84B]/30'
-                      : 'bg-slate-800/60 text-slate-400 border-slate-700'
-                  }`}
+          {modules.map((module) => {
+            const isOpen = openModules.includes(module.id);
+            return (
+              <div key={module.id} className="bg-[#151B2B] border border-slate-800 rounded-xl overflow-hidden">
+                <button
+                  onClick={() => toggleModule(module.id)}
+                  className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-800/40 transition"
                 >
-                  {module.status}
-                </span>
+                  <div>
+                    <h4 className="text-sm font-semibold text-white mb-1">{module.name}</h4>
+                    <p className="text-xs text-slate-400">{module.lessons} lecciones</p>
+                  </div>
+                  <div className="flex items-center space-x-2 flex-shrink-0 ml-3">
+                    <span className={`text-[11px] px-2 py-1 rounded-full border ${
+                      module.status === 'Completado'
+                        ? 'bg-[#1A261E] text-[#98CA3F] border-[#98CA3F]/30'
+                        : module.status === 'En curso'
+                        ? 'bg-[#E5A84B]/10 text-[#E5A84B] border-[#E5A84B]/30'
+                        : 'bg-slate-800/60 text-slate-400 border-slate-700'
+                    }`}>
+                      {module.status}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                </button>
+
+                {isOpen && (
+                  <div className="border-t border-slate-800">
+                    {module.items.map((item, idx) => (
+                      <div key={idx} className="flex items-center px-4 py-3 border-b border-slate-800/50 last:border-b-0">
+                        <div className="mr-3 flex-shrink-0">
+                          {item.done
+                            ? <CheckCircle2 className="w-4 h-4 text-[#98CA3F]" />
+                            : <Circle className="w-4 h-4 text-slate-600" />}
+                        </div>
+                        <span className={`flex-1 text-sm ${item.done ? 'text-slate-400' : 'text-slate-200'}`}>
+                          {item.title}
+                        </span>
+                        <span className="text-xs text-slate-500 ml-2">{item.duration}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <p className="text-xs text-slate-400">{module.lessons} lecciones</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <h3 className="text-slate-400 text-xs font-semibold tracking-wider mb-4 uppercase">Comentarios</h3>
         <div className="space-y-3">
-          {sampleComments.map((comment) => (
-            <div key={comment.id} className="bg-[#151B2B] border border-slate-800 rounded-xl p-4">
-              <div className="flex items-center space-x-2 mb-1.5">
-                <div className="w-6 h-6 rounded-full bg-[#98CA3F] text-[#0B101E] text-[10px] font-bold flex items-center justify-center">
-                  {comment.user.slice(0, 2).toUpperCase()}
+          {comments.map((comment) => {
+            const isMe = comment.user === 'Tú';
+            return (
+              <div key={comment.id} className={`border rounded-xl p-4 ${isMe ? 'bg-[#1A261E] border-[#98CA3F]/30' : 'bg-[#151B2B] border-slate-800'}`}>
+                <div className="flex items-center space-x-2 mb-1.5">
+                  <div className={`w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center ${isMe ? 'bg-[#98CA3F] text-[#0B101E]' : 'bg-slate-700 text-slate-300'}`}>
+                    {comment.user.slice(0, 2).toUpperCase()}
+                  </div>
+                  <span className="text-sm font-medium text-white">{comment.user}</span>
+                  {isMe && <span className="text-[10px] text-[#98CA3F] ml-auto">Tú</span>}
                 </div>
-                <span className="text-sm font-medium text-white">{comment.user}</span>
+                <p className="text-sm text-slate-300">{comment.text}</p>
               </div>
-              <p className="text-sm text-slate-300">{comment.text}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -725,10 +811,15 @@ const CourseLearnView = ({ navigate, course }: CourseViewProps) => {
             type="text"
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSendComment()}
             placeholder="Escribe un comentario..."
             className="flex-1 bg-transparent text-sm text-white placeholder:text-slate-500 focus:outline-none"
           />
-          <button className="w-8 h-8 rounded-lg bg-[#98CA3F] text-[#0B101E] flex items-center justify-center hover:bg-[#86b535] transition-colors">
+          <button
+            onClick={handleSendComment}
+            className="w-8 h-8 rounded-lg bg-[#98CA3F] text-[#0B101E] flex items-center justify-center hover:bg-[#86b535] transition-colors disabled:opacity-40"
+            disabled={!commentText.trim()}
+          >
             <Send className="w-4 h-4" />
           </button>
         </div>
@@ -814,23 +905,98 @@ const GoalSettingView = ({ navigate, course }: CourseViewProps) => {
   const currentCourse = course || mockCourses[0];
   const remainingLessons = currentCourse.totalLessons - currentCourse.lessonsCompleted;
 
-  const renderCalendarDays = () => {
-    const days = [];
-    for (let i = 0; i < 4; i++) {
-      days.push(<div key={`empty-${i}`} className="h-8"></div>);
-    }
-    for (let i = 1; i <= 31; i++) {
-      let bgClass = "text-slate-300 hover:bg-slate-800 rounded-lg cursor-pointer flex items-center justify-center h-8";
-      if (i === 1) bgClass = "bg-[#1A261E] text-[#98CA3F] rounded-lg flex items-center justify-center h-8"; 
-      if (i === 25) bgClass = "bg-[#98CA3F] text-[#0B101E] font-bold rounded-lg flex items-center justify-center h-8"; 
+  const today = new Date(2026, 4, 1); // 1 mayo 2026 como "hoy" del mock
+  const [calendarYear, setCalendarYear] = useState(today.getFullYear());
+  const [calendarMonth, setCalendarMonth] = useState(today.getMonth()); // 0-indexed
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [savedDate, setSavedDate] = useState<Date | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
 
-      days.push(
-        <div key={`day-${i}`} className={bgClass}>
-          {i}
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+  // getDay(): 0=Dom, 1=Lun ... ajustamos para que L=0
+  const firstDayOfMonth = new Date(calendarYear, calendarMonth, 1).getDay();
+  const offset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
+
+  const prevMonth = () => {
+    if (calendarMonth === 0) { setCalendarMonth(11); setCalendarYear(y => y - 1); }
+    else setCalendarMonth(m => m - 1);
+    setSelectedDay(null);
+    setIsSaved(false);
+  };
+
+  const nextMonth = () => {
+    if (calendarMonth === 11) { setCalendarMonth(0); setCalendarYear(y => y + 1); }
+    else setCalendarMonth(m => m + 1);
+    setSelectedDay(null);
+    setIsSaved(false);
+  };
+
+  const handleSelectDay = (day: number) => {
+    const clicked = new Date(calendarYear, calendarMonth, day);
+    if (clicked < today) return; // no permitir fechas pasadas
+    setSelectedDay(day);
+    setIsSaved(false);
+  };
+
+  const handleSave = () => {
+    if (!selectedDay) return;
+    setSavedDate(new Date(calendarYear, calendarMonth, selectedDay));
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2500);
+  };
+
+  const diffDays = (target: Date) => {
+    const diff = target.getTime() - today.getTime();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
+
+  const getRitmo = (days: number) => {
+    if (days <= 0) return 'Fecha inválida';
+    const rate = remainingLessons / days;
+    if (rate <= 1) return 'Alcanzable';
+    if (rate <= 2) return 'Moderado';
+    return 'Intensivo';
+  };
+
+  const formatSavedDate = (d: Date) =>
+    `${d.getDate()} de ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+
+  const savedDays = savedDate ? diffDays(savedDate) : null;
+  const selectedDays = selectedDay ? diffDays(new Date(calendarYear, calendarMonth, selectedDay)) : null;
+
+  const courseInitials = currentCourse.title
+    .replace('Curso de ', '')
+    .split(' ')
+    .slice(0, 2)
+    .map(w => w[0])
+    .join('')
+    .toUpperCase();
+
+  const renderCalendarDays = () => {
+    const cells = [];
+    for (let i = 0; i < offset; i++) {
+      cells.push(<div key={`empty-${i}`} className="h-8" />);
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const isPast = new Date(calendarYear, calendarMonth, d) < today;
+      const isSelected = d === selectedDay;
+      const isToday = calendarYear === today.getFullYear() && calendarMonth === today.getMonth() && d === today.getDate();
+
+      let cls = 'h-8 rounded-lg flex items-center justify-center text-sm transition ';
+      if (isPast) cls += 'text-slate-600 cursor-not-allowed';
+      else if (isSelected) cls += 'bg-[#98CA3F] text-[#0B101E] font-bold cursor-pointer';
+      else if (isToday) cls += 'bg-[#1A261E] text-[#98CA3F] cursor-pointer hover:bg-[#98CA3F]/30';
+      else cls += 'text-slate-300 cursor-pointer hover:bg-slate-800';
+
+      cells.push(
+        <div key={`day-${d}`} className={cls} onClick={() => !isPast && handleSelectDay(d)}>
+          {d}
         </div>
       );
     }
-    return days;
+    return cells;
   };
 
   return (
@@ -845,7 +1011,7 @@ const GoalSettingView = ({ navigate, course }: CourseViewProps) => {
       <div className="p-6">
         <div className="flex items-center space-x-4 mb-8">
           <div className="w-12 h-12 rounded-xl bg-[#1A261E] flex items-center justify-center text-[#98CA3F] font-bold border border-[#98CA3F]/20">
-            JS
+            {courseInitials}
           </div>
           <div>
             <h2 className="font-semibold text-white">{currentCourse.title.replace('Curso de ', '')}</h2>
@@ -854,46 +1020,69 @@ const GoalSettingView = ({ navigate, course }: CourseViewProps) => {
         </div>
 
         <h3 className="text-slate-400 text-xs font-semibold tracking-wider mb-4">FECHA META DE FINALIZACIÓN</h3>
-        
+
         <div className="bg-[#151B2B] rounded-2xl border border-slate-800 p-5 mb-6">
           <div className="flex justify-between items-center mb-6">
-            <button className="text-[#98CA3F]"><ChevronLeft className="w-5 h-5" /></button>
-            <span className="font-semibold">Mayo 2026</span>
-            <button className="text-[#98CA3F] rotate-180"><ChevronLeft className="w-5 h-5" /></button>
+            <button onClick={prevMonth} className="text-[#98CA3F] hover:text-[#b7df6f] transition">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <span className="font-semibold">{monthNames[calendarMonth]} {calendarYear}</span>
+            <button onClick={nextMonth} className="text-[#98CA3F] hover:text-[#b7df6f] transition rotate-180">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
           </div>
-          
-          <div className="grid grid-cols-7 gap-y-4 gap-x-2 text-center text-sm mb-2">
+
+          <div className="grid grid-cols-7 gap-y-3 gap-x-1 text-center text-sm">
             {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(day => (
-              <div key={day} className="text-slate-500 font-medium">{day}</div>
+              <div key={day} className="text-slate-500 font-medium h-8 flex items-center justify-center">{day}</div>
             ))}
             {renderCalendarDays()}
           </div>
         </div>
 
-        <div className="bg-[#1A261E]/30 rounded-2xl border border-[#98CA3F]/20 p-5 mb-8 space-y-3">
+        <div className={`rounded-2xl border p-5 mb-8 space-y-3 transition-colors ${savedDate ? 'bg-[#1A261E]/30 border-[#98CA3F]/20' : 'bg-[#151B2B] border-slate-800'}`}>
           <div className="flex justify-between">
             <span className="text-slate-300">Fecha seleccionada</span>
-            <span className="text-[#98CA3F]">25 de Mayo 2026</span>
+            <span className="text-[#98CA3F]">
+              {savedDate ? formatSavedDate(savedDate) : '—'}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-300">Días disponibles</span>
-            <span className="text-[#98CA3F]">24 días</span>
+            <span className="text-[#98CA3F]">{savedDays !== null ? `${savedDays} días` : '—'}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-300">Lecciones por día</span>
-            <span className="text-[#98CA3F]">1 leccion/día</span>
+            <span className="text-[#98CA3F]">
+              {savedDays !== null && savedDays > 0
+                ? `${(remainingLessons / savedDays).toFixed(1)} lec/día`
+                : '—'}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-300">Ritmo</span>
-            <span className="text-[#98CA3F]">Alcanzable</span>
+            <span className="text-[#98CA3F]">
+              {savedDays !== null ? getRitmo(savedDays) : '—'}
+            </span>
           </div>
         </div>
 
-        <button 
-          onClick={() => navigate('dashboard')}
-          className="w-full bg-[#151B2B] text-white border border-slate-700 py-4 rounded-xl font-medium hover:bg-slate-800 transition"
+        <button
+          onClick={handleSave}
+          disabled={!selectedDay}
+          className={`w-full py-4 rounded-xl font-medium transition-colors border ${
+            isSaved
+              ? 'bg-[#1A261E] border-[#98CA3F] text-[#98CA3F]'
+              : selectedDay
+              ? 'bg-[#151B2B] border-slate-700 text-white hover:bg-slate-800'
+              : 'bg-[#151B2B] border-slate-800 text-slate-600 cursor-not-allowed'
+          }`}
         >
-          Guardar meta
+          {isSaved
+            ? `¡Meta guardada para el ${selectedDay} de ${monthNames[calendarMonth]}!`
+            : selectedDays !== null
+            ? `Guardar meta — ${selectedDay} de ${monthNames[calendarMonth]}`
+            : 'Selecciona una fecha'}
         </button>
       </div>
     </div>
@@ -1394,6 +1583,38 @@ const ChallengesView = ({ navigate: _navigate }: ViewProps) => {
 
 // VISTA 10: Mi actividad (HU-10)
 const ActivityView = ({ navigate }: ViewProps) => {
+  const [chartMode, setChartMode] = useState<'semanal' | 'mensual'>('semanal');
+
+  const weeklyData = [
+    { label: 'L', minutes: 72 },
+    { label: 'M', minutes: 9 },
+    { label: 'X', minutes: 54 },
+    { label: 'J', minutes: 27 },
+    { label: 'V', minutes: 90 },
+    { label: 'S', minutes: 7 },
+    { label: 'D', minutes: 7 },
+  ];
+
+  const monthlyData = [
+    { label: 'Ene', minutes: 210 },
+    { label: 'Feb', minutes: 310 },
+    { label: 'Mar', minutes: 180 },
+    { label: 'Abr', minutes: 420 },
+    { label: 'May', minutes: 390 },
+    { label: 'Jun', minutes: 260 },
+    { label: 'Jul', minutes: 480 },
+    { label: 'Ago', minutes: 150 },
+    { label: 'Sep', minutes: 320 },
+    { label: 'Oct', minutes: 440 },
+    { label: 'Nov', minutes: 370 },
+    { label: 'Dic', minutes: 500 },
+  ];
+
+  const data = chartMode === 'semanal' ? weeklyData : monthlyData;
+  const maxVal = Math.max(...data.map(d => d.minutes));
+  const peak = data.reduce((a, b) => a.minutes >= b.minutes ? a : b);
+  const unit = chartMode === 'semanal' ? 'min' : 'min';
+
   return (
     <div className="h-full bg-[#0B101E] text-white pb-24 overflow-y-auto">
       <div className="p-6 flex items-center space-x-4 border-b border-slate-800 sticky top-0 bg-[#0B101E] z-10">
@@ -1456,30 +1677,57 @@ const ActivityView = ({ navigate }: ViewProps) => {
         {/* Chart Section */}
         <div className="mb-6">
           <div className="flex space-x-2 mb-6">
-            <button className="bg-[#1A261E] border border-[#98CA3F]/50 text-[#98CA3F] px-4 py-1.5 rounded-full text-sm font-medium">Semanal</button>
-            <button className="bg-transparent border border-slate-700 text-slate-400 px-4 py-1.5 rounded-full text-sm font-medium">Mensual</button>
+            {(['semanal', 'mensual'] as const).map(mode => (
+              <button
+                key={mode}
+                onClick={() => setChartMode(mode)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors capitalize ${
+                  chartMode === mode
+                    ? 'bg-[#1A261E] border-[#98CA3F]/50 text-[#98CA3F]'
+                    : 'bg-transparent border-slate-700 text-slate-400 hover:border-slate-500'
+                }`}
+              >
+                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+              </button>
+            ))}
           </div>
 
-          <div className="bg-[#151B2B] rounded-2xl border border-slate-800 p-5 pt-8">
-            <div className="flex items-end justify-between h-32 mb-4 px-1">
-              {/* Bars: L, M, X, J, V, S, D */}
-              <div className="w-8 bg-[#98CA3F] rounded-t-sm" style={{ height: '80%' }}></div>
-              <div className="w-8 bg-slate-700/60 rounded-t-sm" style={{ height: '10%' }}></div>
-              <div className="w-8 bg-[#98CA3F] rounded-t-sm opacity-90" style={{ height: '60%' }}></div>
-              <div className="w-8 bg-[#5A7A2B] rounded-t-sm" style={{ height: '30%' }}></div>
-              <div className="w-8 bg-[#98CA3F] rounded-t-sm shadow-[0_0_15px_rgba(152,202,63,0.3)]" style={{ height: '100%' }}></div>
-              <div className="w-8 bg-slate-700/60 rounded-t-sm" style={{ height: '8%' }}></div>
-              <div className="w-8 bg-slate-700/60 rounded-t-sm" style={{ height: '8%' }}></div>
+          <div className="bg-[#151B2B] rounded-2xl border border-slate-800 p-5 pt-6">
+            <div className="flex items-end justify-between h-32 mb-3 gap-1">
+              {data.map((d, i) => {
+                const heightPct = maxVal > 0 ? (d.minutes / maxVal) * 100 : 0;
+                const isPeak = d.label === peak.label;
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
+                    <div
+                      className={`w-full rounded-t-sm transition-all duration-500 ${
+                        isPeak
+                          ? 'bg-[#98CA3F] shadow-[0_0_12px_rgba(152,202,63,0.35)]'
+                          : heightPct > 40
+                          ? 'bg-[#98CA3F] opacity-75'
+                          : 'bg-slate-700/60'
+                      }`}
+                      style={{ height: `${Math.max(heightPct, 4)}%` }}
+                    />
+                  </div>
+                );
+              })}
             </div>
-            
-            <div className="flex justify-between text-xs text-slate-500 mb-4 px-3">
-              <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
+
+            <div className="flex justify-between text-[10px] text-slate-500 mb-4 px-0.5">
+              {data.map((d, i) => (
+                <span key={i} className={`flex-1 text-center ${d.label === peak.label ? 'text-[#98CA3F] font-semibold' : ''}`}>
+                  {d.label}
+                </span>
+              ))}
             </div>
 
             <div className="flex justify-between items-center text-xs border-t border-slate-800/50 pt-3">
-              <span className="text-slate-500">0 min</span>
-              <span className="text-[#98CA3F] font-medium">Pico: 90 min (vie)</span>
-              <span className="text-slate-500">90 min</span>
+              <span className="text-slate-500">0 {unit}</span>
+              <span className="text-[#98CA3F] font-medium">
+                Pico: {peak.minutes} {unit} ({peak.label})
+              </span>
+              <span className="text-slate-500">{maxVal} {unit}</span>
             </div>
           </div>
         </div>
